@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="am">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ENQOPAZYON | Premium Digital Exchange</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Noto+Sans+Ethiopic:wght@400;700;900&display=swap"
+        rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', 'Noto Sans Ethiopic', sans-serif;
+            background-color: #020617;
+            color: #f8fafc;
+            overflow-x: hidden;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        body::-webkit-scrollbar {
+            display: none;
+        }
+
+        .glass {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .buy-mode {
+            --accent: #2dd4bf;
+            --accent-shadow: rgba(45, 212, 191, 0.2);
+        }
+
+        .sell-mode {
+            --accent: #f97316;
+            --accent-shadow: rgba(249, 115, 22, 0.2);
+        }
+
+        .transition-all {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+
+<body class="buy-mode transition-all">
+    <div id="glow"
+        class="fixed top-0 left-0 w-full h-[60%] blur-[120px] opacity-20 pointer-events-none transition-all bg-[#2dd4bf]">
+    </div>
+
+    <div class="min-h-screen w-full flex flex-col items-center p-4 relative z-10">
+
+        <header class="w-full max-w-sm flex flex-col gap-6 pt-6">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl font-black tracking-tighter">
+                    ENQO<span id="brand-accent" class="text-[#2dd4bf]">PAZYON</span>
+                </h1>
+                <div
+                    class="flex bg-white/5 p-1 rounded-full border border-white/10 backdrop-blur-md text-[10px] font-bold">
+                    <button onclick="setLang('en')" id="lang-en"
+                        class="px-3 py-1 rounded-full bg-[#2dd4bf] text-black">EN</button>
+                    <button onclick="setLang('am')" id="lang-am"
+                        class="px-3 py-1 rounded-full text-slate-500">አማ</button>
+                </div>
+            </div>
+
+            <div
+                class="bg-slate-900/40 border border-white/5 rounded-full px-4 py-2 flex items-center justify-between text-[11px] font-bold text-slate-400">
+                <span>1 USDT = <span id="rate-display" class="text-white">183.20</span> ETB</span>
+                <div class="flex items-center gap-2">
+                    <div id="live-dot" class="w-2 h-2 rounded-full animate-pulse bg-[#2dd4bf] shadow-[0_0_8px_#2dd4bf]">
+                    </div>
+                    <span class="uppercase">Live</span>
+                </div>
+            </div>
+
+            <div class="flex bg-slate-950/50 rounded-2xl p-1.5 border border-white/5 relative">
+                <button onclick="setMode('buy')" id="btn-buy"
+                    class="flex-1 py-3 text-xs font-bold rounded-xl z-10 text-black">USDT ግዛ</button>
+                <button onclick="setMode('sell')" id="btn-sell"
+                    class="flex-1 py-3 text-xs font-bold rounded-xl z-10 text-slate-500">USDT ሽጥ</button>
+                <div id="mode-slider"
+                    class="absolute top-1.5 left-1.5 w-[calc(50%-6px)] h-[calc(100%-12px)] rounded-xl bg-[#2dd4bf] shadow-lg transition-all duration-300">
+                </div>
+            </div>
+        </header>
+
+        <form onsubmit="handleSubmit(event)" class="w-full max-w-sm flex flex-col gap-5 mt-8 pb-24">
+            <div class="space-y-3">
+                <input type="text" id="input-name" placeholder="ሙሉ ስም" required
+                    class="w-full bg-slate-900/60 border border-white/10 rounded-2xl p-4 text-sm focus:outline-none focus:border-white/20">
+                <input type="tel" id="input-phone" placeholder="ስልክ ቁጥር" required
+                    class="w-full bg-slate-900/60 border border-white/10 rounded-2xl p-4 text-sm focus:outline-none focus:border-white/20">
+            </div>
+
+            <div class="bg-slate-900/60 p-6 rounded-[2rem] border border-white/5 backdrop-blur-md">
+                <label id="label-amount"
+                    class="text-[10px] font-bold text-slate-500 uppercase block mb-2 tracking-widest">የUSDT መጠን</label>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="input-amount" step="any" placeholder="Min 7" oninput="calculate()" required
+                        class="bg-transparent text-4xl font-black w-full outline-none text-white">
+                    <span class="text-sm font-bold text-slate-500">USDT</span>
+                </div>
+                <div class="mt-6 pt-6 border-t border-white/5 flex justify-between items-end">
+                    <div class="flex flex-col">
+                        <span id="label-total" class="text-[10px] font-bold text-slate-500 uppercase mb-1">ጠቅላላ የኢትዮጵያ
+                            ብር፡</span>
+                        <span id="total-display" class="text-2xl font-black text-[#2dd4bf]">0.00</span>
+                    </div>
+                    <span class="text-xs font-bold text-slate-500 mb-1">ETB</span>
+                </div>
+            </div>
+
+            <div id="dynamic-info" class="space-y-4">
+            </div>
+
+            <label id="upload-box"
+                class="block p-8 border-2 border-dashed border-white/10 rounded-[2rem] text-center cursor-pointer hover:bg-white/5 transition-all">
+                <div id="upload-icon" class="mb-3 text-slate-500">
+                    <i data-lucide="upload" class="w-8 h-8 mx-auto"></i>
+                </div>
+                <div id="file-name" class="text-[11px] font-bold text-white uppercase tracking-widest">የክፍያ ማረጋገጫ ፎቶ
+                    ያያይዙ</div>
+                <div class="text-[9px] font-bold text-slate-500 uppercase mt-1">Max 5MB • Instant Scan</div>
+                <input type="file" id="input-file" accept="image/*" onchange="handleFile(event)" class="hidden">
+            </label>
+
+            <button type="submit" id="submit-btn"
+                class="w-full py-5 rounded-2xl text-sm font-black uppercase tracking-widest bg-[#2dd4bf] text-black shadow-lg active:scale-95 transition-all">
+                ትዕዛዙን አረጋግጥ
+            </button>
+
+            <div class="text-center opacity-40 mt-4">
+                <p id="disclaimer" class="text-[10px] text-slate-600 uppercase tracking-widest px-4">
+                    ማሳሰቢያ፡ ዕንቆጳዝዮን ማርኬት ያልተማከለ እና p2p ያልሆነ የክሪፕቶ መገበያያ ገበያ ነው።
+                </p>
+                <div class="mt-4 flex flex-col gap-1">
+                    <span class="text-[9px] font-bold uppercase tracking-widest">Powered by ሜሌክ ENQOPAZYON</span>
+                    <span class="text-[9px] font-bold uppercase">© 2026</span>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div id="toast"
+        class="fixed bottom-8 left-8 right-8 p-5 rounded-2xl text-center text-xs font-bold z-[100] shadow-2xl border bg-teal-500/90 text-black backdrop-blur-xl hidden">
+    </div>
+
+    <script>
+        // Configuration
+        const BUY_RATE = 183.2;
+        const SELL_RATE = 180.0;
+        const TELEBIRR = "0984488647";
+        const WALLET = "TY4bmjxg5gMJmKhaSuaGkkYkBHrVi1mVxM";
+
+        let currentMode = 'buy';
+        let currentLang = 'am';
+        let base64Image = null;
+
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+
+        const translations = {
+            en: {
+                buy: "BUY USDT", sell: "SELL USDT", name: "Full Name", phone: "Phone Number", amount: "Amount in USDT",
+                total: "Total ETB:", payTo: "Transfer to Telebirr:", sendTo: "Send USDT to (TRC20):",
+                confirm: "Confirm Order", wallet: "Your Wallet Address", tele: "Your Telebirr Number",
+                disclaimer: "Disclaimer: ENQOPAZYON market is a decentralized non-p2p transaction market.",
+                success: "Order Sent!", upload: "Attach Proof Screenshot"
+            },
+            am: {
+                buy: "USDT ግዛ", sell: "USDT ሽጥ", name: "ሙሉ ስም", phone: "ስልክ ቁጥር", amount: "የUSDT መጠን",
+                total: "ጠቅላላ የኢትዮጵያ ብር፡", payTo: "በዚህ ቴሌብር ይላኩ፡", sendTo: "በዚህ አድራሻ ይላኩ (TRC20):",
+                confirm: "ትዕዛዙን አረጋግጥ", wallet: "የእርስዎ ዋሌት አድራሻ", tele: "የእርስዎ ቴሌብር ቁጥር",
+                disclaimer: "ማሳሰቢያ፡ ዕንቆጳዝዮን ማርኬት ያልተማከለ እና p2p ያልሆነ የክሪፕቶ መገበያያ ገበያ ነው።",
+                success: "ትዕዛዙ ተልኳል!", upload: "የክፍያ ማረጋገጫ ፎቶ ያያይዙ"
+            }
+        };
+
+        function setMode(mode) {
+            currentMode = mode;
+            const isBuy = mode === 'buy';
+
+            // UI Colors
+            const color = isBuy ? '#2dd4bf' : '#f97316';
+            document.body.className = isBuy ? 'buy-mode transition-all' : 'sell-mode transition-all';
+            document.getElementById('glow').style.backgroundColor = color;
+            document.getElementById('brand-accent').style.color = color;
+            document.getElementById('mode-slider').style.backgroundColor = color;
+            document.getElementById('mode-slider').style.transform = isBuy ? 'translateX(0)' : 'translateX(100%)';
+            document.getElementById('live-dot').style.backgroundColor = color;
+            document.getElementById('total-display').style.color = color;
+            document.getElementById('submit-btn').style.backgroundColor = color;
+            document.getElementById('submit-btn').style.color = isBuy ? 'black' : 'white';
+
+            document.getElementById('btn-buy').style.color = isBuy ? 'black' : '#64748b';
+            document.getElementById('btn-sell').style.color = isBuy ? '#64748b' : 'white';
+            document.getElementById('rate-display').innerText = (isBuy ? BUY_RATE : SELL_RATE).toFixed(2);
+
+            updateDynamicContent();
+            calculate();
+        }
+
+        function setLang(lang) {
+            currentLang = lang;
+            const t = translations[lang];
+
+            document.getElementById('lang-en').className = `px-3 py-1 rounded-full ${lang === 'en' ? 'bg-[#2dd4bf] text-black' : 'text-slate-500'}`;
+            document.getElementById('lang-am').className = `px-3 py-1 rounded-full ${lang === 'am' ? 'bg-[#2dd4bf] text-black' : 'text-slate-500'}`;
+
+            document.getElementById('btn-buy').innerText = t.buy;
+            document.getElementById('btn-sell').innerText = t.sell;
+            document.getElementById('input-name').placeholder = t.name;
+            document.getElementById('input-phone').placeholder = t.phone;
+            document.getElementById('label-amount').innerText = t.amount;
+            document.getElementById('label-total').innerText = t.total;
+            document.getElementById('submit-btn').innerText = t.confirm;
+            document.getElementById('disclaimer').innerText = t.disclaimer;
+            document.getElementById('file-name').innerText = t.upload;
+
+            updateDynamicContent();
+        }
+
+        function updateDynamicContent() {
+            const t = translations[currentLang];
+            const isBuy = currentMode === 'buy';
+            const html = isBuy ? `
+                <div class="p-5 bg-teal-500/5 rounded-3xl border border-teal-500/10">
+                    <div class="flex justify-between items-center mb-2 text-[11px] font-bold text-slate-400">${t.payTo}</div>
+                    <div class="text-2xl font-black text-teal-400 tracking-widest font-mono">${TELEBIRR}</div>
+                </div>
+                <input type="text" id="target-id" placeholder="${t.wallet}" required class="w-full bg-slate-900/60 border border-white/10 rounded-2xl p-4 text-sm outline-none">
+            ` : `
+                <div class="p-5 bg-orange-500/5 rounded-3xl border border-orange-500/10">
+                    <div class="flex justify-between items-center mb-2 text-[11px] font-bold text-slate-400">${t.sendTo}</div>
+                    <div class="text-[10px] font-mono break-all font-bold text-orange-400 bg-black/20 p-4 rounded-xl border border-white/5">${WALLET}</div>
+                </div>
+                <input type="text" id="target-id" placeholder="${t.tele}" required class="w-full bg-slate-900/60 border border-white/10 rounded-2xl p-4 text-sm outline-none">
+            `;
+            document.getElementById('dynamic-info').innerHTML = html;
+        }
+
+        function calculate() {
+            const val = parseFloat(document.getElementById('input-amount').value) || 0;
+            if (val < 7) {
+                document.getElementById('total-display').innerText = "0.00";
+                return;
+            }
+            const total = currentMode === 'buy' ? (val + 1) * BUY_RATE : (val - 1) * SELL_RATE;
+            document.getElementById('total-display').innerText = total.toLocaleString(undefined, { minimumFractionDigits: 2 });
+        }
+
+        function handleFile(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            document.getElementById('file-name').innerText = "ምስሉን በማዘጋጀት ላይ...";
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_W = 800;
+                    let w = img.width, h = img.height;
+                    if (w > MAX_W) { h *= MAX_W / w; w = MAX_W; }
+                    canvas.width = w; canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    base64Image = canvas.toDataURL('image/jpeg', 0.5);
+                    document.getElementById('file-name').innerText = file.name.substring(0, 20) + "...";
+                    document.getElementById('upload-icon').style.color = currentMode === 'buy' ? '#2dd4bf' : '#f97316';
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showToast(msg, error = false) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.className = `fixed bottom-8 left-8 right-8 p-5 rounded-2xl text-center text-xs font-bold z-[100] shadow-2xl border backdrop-blur-xl ${error ? 'bg-rose-500 text-white' : 'bg-teal-500 text-black'}`;
+            toast.style.display = 'block';
+            setTimeout(() => toast.style.display = 'none', 4000);
+        }
+
+        function handleSubmit(e) {
+            e.preventDefault();
+            const val = parseFloat(document.getElementById('input-amount').value);
+            if (val < 7) return showToast("Minimum 7 USDT", true);
+            if (!base64Image) return showToast("እባክዎ መጀመሪያ ደረሰኝ ያያይዙ", true);
+
+            const data = {
+                type: currentMode.toUpperCase(),
+                name: document.getElementById('input-name').value,
+                phone: document.getElementById('input-phone').value,
+                usdt_amount: val,
+                etb_total: document.getElementById('total-display').innerText,
+                wallet: currentMode === 'buy' ? document.getElementById('target-id').value : 'N/A',
+                telebirr: currentMode === 'sell' ? document.getElementById('target-id').value : 'N/A',
+                receipt: base64Image,
+                timestamp: new Date().toLocaleString()
+            };
+
+            if (window.Telegram?.WebApp) {
+                tg.sendData(JSON.stringify(data));
+                showToast(translations[currentLang].success);
+            } else {
+                console.log("Submit Data:", data);
+                showToast("Data logged to console");
+            }
+        }
+
+        // Init
+        lucide.createIcons();
+        setMode('buy');
+    </script>
+</body>
+
+</html>
