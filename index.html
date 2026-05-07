@@ -264,7 +264,7 @@
                 const isBuy = currentMode === 'buy';
                 const color = isBuy ? '#2dd4bf' : '#f97316';
                 
-                showToast(currentLang === 'en' ? "ተገልብጧል!" : "Copied!");
+                showToast(currentLang === 'am' ? "ተገልብጧል!" : "Copied!");
                 
                 // Visual feedback on the element
                 el.style.borderColor = color;
@@ -276,12 +276,10 @@
 
         function calculate() {
             const val = parseFloat(document.getElementById('input-amount').value) || 0;
-            if (val < 7) {
-                document.getElementById('total-display').innerText = "0.00";
-                return;
-            }
-            const total = currentMode === 'buy' ? (val + 1) * BUY_RATE : (val - 1) * SELL_RATE;
-            document.getElementById('total-display').innerText = total.toLocaleString(undefined, { minimumFractionDigits: 2 });
+           const rate = currentMode === 'buy' ? BUY_RATE : SELL_RATE;
+            const total = val * rate;
+            document.getElementById('total-display').innerText = total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('submit-btn').disabled = val < 7;
         }
 
         function handleFile(e) {
