@@ -232,19 +232,46 @@
             const t = translations[currentLang];
             const isBuy = currentMode === 'buy';
             const html = isBuy ? `
-                <div class="p-5 bg-teal-500/5 rounded-3xl border border-teal-500/10">
-                    <div class="flex justify-between items-center mb-2 text-[11px] font-bold text-slate-400">${t.payTo}</div>
-                    <div class="text-2xl font-black text-teal-400 tracking-widest font-mono">${TELEBIRR}</div>
+                <div class="p-5 bg-teal-500/5 rounded-3xl border border-teal-500/10 group active:scale-95 transition-all cursor-pointer" onclick="copyToClipboard('${TELEBIRR}', this)">
+                    <div class="flex justify-between items-center mb-2 text-[11px] font-bold text-slate-400">
+                        ${t.payTo}
+                        <i data-lucide="copy" class="w-3 h-3 text-teal-500/50"></i>
+                    </div>
+                    <div class="text-2xl font-black text-teal-400 tracking-widest font-mono flex items-center justify-between">
+                        <span id="copy-text">${TELEBIRR}</span>
+                    </div>
                 </div>
-                <input type="text" id="target-id" placeholder="${t.wallet}" required class="w-full bg-slate-900/60 border border-white/10 rounded-2xl p-4 text-sm outline-none">
+                <input type="text" id="target-id" placeholder="${t.wallet}" required class="w-full bg-slate-900/60 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-teal-500/30">
             ` : `
-                <div class="p-5 bg-orange-500/5 rounded-3xl border border-orange-500/10">
-                    <div class="flex justify-between items-center mb-2 text-[11px] font-bold text-slate-400">${t.sendTo}</div>
-                    <div class="text-[10px] font-mono break-all font-bold text-orange-400 bg-black/20 p-4 rounded-xl border border-white/5">${WALLET}</div>
+                <div class="p-5 bg-orange-500/5 rounded-3xl border border-orange-500/10 group active:scale-95 transition-all cursor-pointer" onclick="copyToClipboard('${WALLET}', this)">
+                    <div class="flex justify-between items-center mb-2 text-[11px] font-bold text-slate-400">
+                        ${t.sendTo}
+                        <i data-lucide="copy" class="w-3 h-3 text-orange-500/50"></i>
+                    </div>
+                    <div class="text-[10px] font-mono break-all font-bold text-orange-400 bg-black/20 p-4 rounded-xl border border-white/5 flex items-center justify-between gap-2">
+                        <span id="copy-text" class="flex-1">${WALLET}</span>
+                    </div>
                 </div>
-                <input type="text" id="target-id" placeholder="${t.tele}" required class="w-full bg-slate-900/60 border border-white/10 rounded-2xl p-4 text-sm outline-none">
+                <input type="text" id="target-id" placeholder="${t.tele}" required class="w-full bg-slate-900/60 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-orange-500/30">
             `;
             document.getElementById('dynamic-info').innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function copyToClipboard(text, el) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalHTML = el.innerHTML;
+                const isBuy = currentMode === 'buy';
+                const color = isBuy ? '#2dd4bf' : '#f97316';
+                
+                showToast(currentLang === 'am' ? "ተገልብጧል!" : "Copied!");
+                
+                // Visual feedback on the element
+                el.style.borderColor = color;
+                setTimeout(() => {
+                    el.style.borderColor = '';
+                }, 1000);
+            });
         }
 
         function calculate() {
@@ -302,7 +329,7 @@
             btn.innerText = currentLang === 'am' ? "በመላክ ላይ..." : "Sending...";
 
             try {
-               
+                // 1. Upload to ImgBB first (to bypass Telegram 18KB limit)
                 const IMGBB_API_KEY = "4962437458388edb8386469b93e9a0a0";
                 const formData = new FormData();
                 const blob = await (await fetch(base64Image)).blob();
@@ -316,7 +343,7 @@
 
                 if (!imgData.success) throw new Error("Image upload failed");
 
-               
+                // 2. Send order data with image URL via Telegram
                 const data = {
                     type: currentMode.toUpperCase(),
                     name: document.getElementById('input-name').value,
