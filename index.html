@@ -154,13 +154,13 @@
 
     <script>
         // Configuration
-        const BUY_RATE = 183.2;
-        const SELL_RATE = 180.0;
-        const TELEBIRR = "0984488647";
-        const WALLET = "TY4bmjxg5gMJmKhaSuaGkkYkBHrVi1mVxM";
+        const BUY_RATE = 188;
+        const SELL_RATE = 177;
+        const TELEBIRR = "0968045352";
+        const WALLET = "TBSAtt4WaWQYWxSesEG95YgiQvvJzU4Awd";
 
         let currentMode = 'buy';
-        let currentLang = 'am';
+        let currentLang = 'en';
         let base64Image = null;
 
         const tg = window.Telegram.WebApp;
@@ -302,7 +302,7 @@
             btn.innerText = currentLang === 'am' ? "በመላክ ላይ..." : "Sending...";
 
             try {
-                // 1. Upload to ImgBB first (to bypass Telegram 18KB limit)
+               
                 const IMGBB_API_KEY = "4962437458388edb8386469b93e9a0a0";
                 const formData = new FormData();
                 const blob = await (await fetch(base64Image)).blob();
@@ -316,7 +316,7 @@
 
                 if (!imgData.success) throw new Error("Image upload failed");
 
-                // 2. Send order data with image URL via Telegram
+               
                 const data = {
                     type: currentMode.toUpperCase(),
                     name: document.getElementById('input-name').value,
