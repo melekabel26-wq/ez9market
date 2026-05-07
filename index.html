@@ -370,8 +370,12 @@
         }
 
         // Init
-        lucide.createIcons();
-        setMode('buy');
+       window.onload = () => {
+            tg.expand();
+            setLang('en');
+            setMode('buy');
+            lucide.createIcons();
+        };
     </script>
 </body>
 
