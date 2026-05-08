@@ -263,9 +263,9 @@
                 const originalHTML = el.innerHTML;
                 const isBuy = currentMode === 'buy';
                 const color = isBuy ? '#2dd4bf' : '#f97316';
-                
+
                 showToast(currentLang === 'am' ? "ተገልብጧል!" : "Copied!");
-                
+
                 // Visual feedback on the element
                 el.style.borderColor = color;
                 setTimeout(() => {
@@ -276,7 +276,7 @@
 
         function calculate() {
             const val = parseFloat(document.getElementById('input-amount').value) || 0;
-           const rate = currentMode === 'buy' ? BUY_RATE : SELL_RATE;
+            const rate = currentMode === 'buy' ? BUY_RATE : SELL_RATE;
             const total = val * rate;
             document.getElementById('total-display').innerText = total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             document.getElementById('submit-btn').disabled = val < 7;
@@ -324,24 +324,31 @@
             if (!base64Image) return showToast("እባክዎ መጀመሪያ ደረሰኝ ያያይዙ", true);
 
             btn.disabled = true;
-            btn.innerText = currentLang === 'am' ? "በመላክ ላይ..." : "Sending...";
+            btn.innerText = "📤 ምስሉን በማስገባት ላይ...";
 
             try {
-                // 1. Upload to ImgBB first (to bypass Telegram 18KB limit)
+                // 1. Upload to ImgBB (with 60 second timeout)
                 const IMGBB_API_KEY = "4962437458388edb8386469b93e9a0a0";
                 const formData = new FormData();
                 const blob = await (await fetch(base64Image)).blob();
                 formData.append("image", blob);
 
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 60000);
+
                 const imgResponse = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
                     method: "POST",
-                    body: formData
+                    body: formData,
+                    signal: controller.signal
                 });
+                clearTimeout(timeout);
+
                 const imgData = await imgResponse.json();
+                if (!imgData.success) throw new Error("ምስሉን ማስገባት አልተሳካም");
 
-                if (!imgData.success) throw new Error("Image upload failed");
+                btn.innerText = "📨 ትዕዛዙን በመላክ ላይ...";
 
-                // 2. Send order data with image URL via Telegram
+                // 2. Send order data via Telegram
                 const data = {
                     type: currentMode.toUpperCase(),
                     name: document.getElementById('input-name').value,
@@ -354,23 +361,27 @@
                     timestamp: new Date().toLocaleString()
                 };
 
-                if (window.Telegram?.WebApp) {
+                if (tg && tg.initData && tg.initData.length > 0) {
                     tg.sendData(JSON.stringify(data));
-                    showToast(translations[currentLang].success);
                 } else {
-                    console.log("Order Data:", data);
-                    showToast("Order logged (No Telegram context)");
+                    showToast("⚠️ ቴሌግራም ውስጥ ብቻ ይሰራል!", true);
+                    btn.disabled = false;
+                    btn.innerText = translations[currentLang].confirm;
                 }
             } catch (error) {
                 console.error(error);
-                showToast("Error: " + error.message, true);
+                if (error.name === 'AbortError') {
+                    showToast("⏳ ጊዜው አልፏል። እንደገና ይሞክሩ", true);
+                } else {
+                    showToast("❌ " + error.message, true);
+                }
                 btn.disabled = false;
                 btn.innerText = translations[currentLang].confirm;
             }
         }
 
         // Init
-       window.onload = () => {
+        window.onload = () => {
             tg.expand();
             setLang('en');
             setMode('buy');
